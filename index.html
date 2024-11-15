@@ -5,27 +5,60 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Currency Detection Using Teachable Machine</title>
     <style>
-        #message {
-            font-size: 20px;
-            font-weight: bold;
-            margin-top: 20px;
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            background-color: #f9f9f9;
+            margin: 0;
+            padding: 0;
+        }
+        h2 {
+            color: #333;
+            margin: 20px 0;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            font-size: 16px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 10px;
+        }
+        button:hover {
+            background-color: #45a049;
         }
         #webcam-container {
             display: flex;
             justify-content: center;
-            margin-top: 20px;
+            margin: 20px auto;
+            background: #fff;
+            padding: 10px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            max-width: 300px;
         }
-        #label-container {
-            margin-top: 20px;
+        #label-container, #message {
+            margin: 20px auto;
+            font-size: 18px;
+            color: #444;
+            font-weight: bold;
+        }
+        #logo {
+            width: 100px;
+            margin: 20px auto;
         }
     </style>
 </head>
 <body>
     <h2>Currency Detection Using Teachable Machine</h2>
+    <img id="logo" src="logo.png" alt="App Logo">
     <button onclick="init()">Start Detection</button>
+    <button onclick="swapCamera()">Swap Camera</button>
     <div id="webcam-container"></div>
     <div id="label-container"></div>
-    <div id="message"></div>
+    <div id="message">Press "Start Detection" to begin.</div>
 
     <!-- Load TensorFlow.js and Teachable Machine libraries -->
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest/dist/tf.min.js"></script>
@@ -38,6 +71,7 @@
         // Global variables
         let model, webcam, labelContainer, maxPredictions;
         let lastPlayedTime = 0; // Timestamp for last audio play
+        let usingFrontCamera = true; // Track camera being used
 
         // Mapping of classes to their respective MP3 files (local paths)
         const audioFiles = {
@@ -61,21 +95,30 @@
             model = await tmImage.load(modelURL, metadataURL);
             maxPredictions = model.getTotalClasses();
 
-            // Setup webcam with optional flip (for mirroring the webcam)
-            const flip = true; 
-            webcam = new tmImage.Webcam(200, 200, flip); 
-            await webcam.setup(); 
-            await webcam.play();  
-            window.requestAnimationFrame(loop);
-
-            // Append the webcam video to the DOM
-            document.getElementById("webcam-container").appendChild(webcam.canvas);
+            // Setup webcam with flip option
+            await setupWebcam(usingFrontCamera);
 
             // Create labels for predictions
             labelContainer = document.getElementById("label-container");
             for (let i = 0; i < maxPredictions; i++) {
                 labelContainer.appendChild(document.createElement("div"));
             }
+
+            // Announce selected camera
+            announceCamera(usingFrontCamera ? "front" : "back");
+            window.requestAnimationFrame(loop);
+        }
+
+        // Function to setup webcam with the selected camera
+        async function setupWebcam(useFrontCamera) {
+            if (webcam) {
+                webcam.stop(); // Stop current webcam stream
+            }
+            webcam = new tmImage.Webcam(300, 300, useFrontCamera); 
+            await webcam.setup();
+            await webcam.play();
+            document.getElementById("webcam-container").innerHTML = ""; // Clear previous webcam canvas
+            document.getElementById("webcam-container").appendChild(webcam.canvas);
         }
 
         // Function to continuously capture webcam frames and make predictions
@@ -126,14 +169,25 @@
                 audio.play().catch((error) => {
                     console.error("Audio failed to play:", error);
                 });
-                console.log(`Playing audio for: ${className}`); // Debugging line to check which file is being played
             } else {
-                console.error("Audio file not found for: " + className); // Log an error if the file path is missing
+                console.error("Audio file not found for: " + className);
             }
         }
 
-        // Start detection once the page loads
-        init();
+        // Function to announce the selected camera
+        function announceCamera(camera) {
+            const message = `Using ${camera} camera.`;
+            const audio = new SpeechSynthesisUtterance(message);
+            window.speechSynthesis.speak(audio);
+            document.getElementById("message").innerHTML = message;
+        }
+
+        // Function to toggle between front and back cameras
+        function swapCamera() {
+            usingFrontCamera = !usingFrontCamera;
+            setupWebcam(usingFrontCamera);
+            announceCamera(usingFrontCamera ? "front" : "back");
+        }
     </script>
 </body>
 </html>
