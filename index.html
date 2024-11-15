@@ -33,7 +33,7 @@
 
     <script>
         // URL for your Teachable Machine model
-        const URL = "https://teachablemachine.withgoogle.com/models/J-kXaPdE1/";
+        const URL = "https://teachablemachine.withgoogle.com/models/GeWwvngNC/";
 
         // Global variables
         let model, webcam, labelContainer, maxPredictions;
@@ -45,7 +45,10 @@
             "200": "200.mp3",
             "100": "100.mp3",
             "50": "50.mp3",
+            "20": "20.mp3",
             "10": "10.mp3",
+            "2000": "2000.mp3",
+            "1 dollar": "audio/1_dollar.mp3",
             "No currency note detected": "audio/no_currency.mp3"
         };
 
@@ -107,9 +110,9 @@
             // Update the detected currency note display continuously
             document.getElementById("message").innerHTML = `Detected: ${predictedClass}`;
 
-            // Play audio only if confidence level is high enough and 10 seconds have passed since the last play
+            // Play audio only if confidence level is high enough and 5 seconds have passed since the last play
             const currentTime = Date.now();
-            if (maxProbability >= 0.75 && (currentTime - lastPlayedTime >= 10000)) { // 10 seconds = 10000 ms
+            if (maxProbability >= 0.75 && (currentTime - lastPlayedTime >= 5000)) { // 5 seconds = 5000 ms
                 playAudio(predictedClass); // Play the corresponding audio
                 lastPlayedTime = currentTime; // Update last played time
             }
