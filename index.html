@@ -117,11 +117,26 @@
             if (webcam) {
                 webcam.stop();
             }
-            webcam = new tmImage.Webcam(224, 224, useFrontCamera); // Reduced resolution
-            await webcam.setup();
-            await webcam.play();
-            document.getElementById("webcam-container").innerHTML = "";
-            document.getElementById("webcam-container").appendChild(webcam.canvas);
+
+            // Get the appropriate video constraints for front or back camera
+            const constraints = {
+                video: {
+                    facingMode: useFrontCamera ? "user" : "environment",
+                    width: { ideal: 224 },
+                    height: { ideal: 224 }
+                }
+            };
+
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia(constraints);
+                webcam = new tmImage.Webcam(224, 224, useFrontCamera); // Smaller resolution
+                await webcam.setup(stream);
+                await webcam.play();
+                document.getElementById("webcam-container").innerHTML = "";
+                document.getElementById("webcam-container").appendChild(webcam.canvas);
+            } catch (error) {
+                console.error("Error accessing camera:", error);
+            }
         }
 
         async function loop() {
