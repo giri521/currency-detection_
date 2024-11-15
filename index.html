@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Currency Detection Using Teachable Machine</title>
     <style>
-        /* Apply a gradient background for a modern mobile-friendly look */
         body {
             background: linear-gradient(to right, #4facfe, #00f2fe); /* Gradient background */
             font-family: Arial, sans-serif;
@@ -25,7 +24,6 @@
             font-size: 24px;
         }
 
-        /* Style the buttons for better visibility on mobile */
         button {
             background-color: #00f2fe;
             border: none;
@@ -68,28 +66,13 @@
     <div id="label-container"></div>
     <div id="message"></div>
 
-    <!-- Load TensorFlow.js and Teachable Machine libraries -->
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest/dist/tf.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@latest/dist/teachablemachine-image.min.js"></script>
 
     <script>
-        const URL = "https://teachablemachine.withgoogle.com/models/J-kXaPdE1/";
+        const URL = "https://teachablemachine.withgoogle.com/models/GeWwvngNC/";
 
         let model, webcam, labelContainer, maxPredictions;
-        let lastPlayedTime = 0;
-
-        const audioFiles = {
-            "500": "500.mp3",
-            "200": "200.mp3",
-            "100": "100.mp3",
-            "50": "50.mp3",
-            "10": "10.mp3",
-            "100 (USD)": "100_dollar.mp3",
-            "50 (USD)": "audio/50_dollar.mp3",
-            "20 (USD)": "audio/20_dollar.mp3",
-            "10 (USD)": "audio/10_dollar.mp3",
-            "No currency note detected": "audio/no_currency.mp3"
-        };
 
         async function init(useBackCamera = false) {
             const modelURL = URL + "model.json";
@@ -103,44 +86,48 @@
             const constraints = {
                 video: {
                     facingMode: useBackCamera ? { exact: "environment" } : "user",
-                    width: 320, // Reduced resolution for faster loading
+                    width: 320,
                     height: 240
                 }
             };
 
             navigator.mediaDevices.getUserMedia(constraints)
-                .then(function(stream) {
+                .then(function (stream) {
                     const videoElement = document.createElement("video");
                     videoElement.srcObject = stream;
                     videoElement.play();
-                    videoElement.width = 320; // Adjusted width
-                    videoElement.height = 240; // Adjusted height
+                    videoElement.width = 320;
+                    videoElement.height = 240;
 
-                    document.getElementById("webcam-container").innerHTML = ""; // Clear existing webcam
+                    document.getElementById("webcam-container").innerHTML = "";
                     document.getElementById("webcam-container").appendChild(videoElement);
 
                     webcam = new tmImage.Webcam(320, 240, false);
                     webcam.video = videoElement;
 
                     labelContainer = document.getElementById("label-container");
-                    labelContainer.innerHTML = ""; // Clear previous labels
+                    labelContainer.innerHTML = "";
                     for (let i = 0; i < maxPredictions; i++) {
                         labelContainer.appendChild(document.createElement("div"));
                     }
+
+                    const cameraType = useBackCamera ? "Back Camera" : "Front Camera";
+                    document.getElementById("message").innerHTML = `Using ${cameraType}`;
 
                     videoElement.onloadedmetadata = () => {
                         videoElement.play();
                         window.requestAnimationFrame(loop);
                     };
                 })
-                .catch(function(err) {
+                .catch(function (err) {
                     console.error("Error accessing the camera: ", err);
+                    document.getElementById("message").innerHTML = "Camera access denied or not available.";
                 });
         }
 
         async function loop() {
-            await predict(); 
-            window.requestAnimationFrame(loop); 
+            await predict();
+            window.requestAnimationFrame(loop);
         }
 
         async function predict() {
@@ -161,25 +148,10 @@
                 }
             }
 
-            document.getElementById("message").innerHTML = `Detected: ${predictedClass}`;
-
-            const currentTime = Date.now();
-            if (maxProbability >= 0.75 && (currentTime - lastPlayedTime >= 10000)) {
-                playAudio(predictedClass); 
-                lastPlayedTime = currentTime;
-            }
-        }
-
-        function playAudio(className) {
-            const audioPath = audioFiles[className];
-            if (audioPath) {
-                const audio = new Audio(audioPath);
-                audio.play().catch((error) => {
-                    console.error("Audio failed to play:", error);
-                });
-                console.log(`Playing audio for: ${className}`);
+            if (maxProbability >= 0.75) {
+                document.getElementById("message").innerHTML = `Detected: ${predictedClass}`;
             } else {
-                console.error("Audio file not found for: " + className);
+                document.getElementById("message").innerHTML = "No currency note detected.";
             }
         }
     </script>
