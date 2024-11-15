@@ -78,6 +78,7 @@
         let lastPlayedTime = 0; // Timestamp for last audio play
         let usingFrontCamera = true; // Track camera being used
         let predictionsInterval; // Interval to control prediction frequency
+        let currentStream = null; // Store the current video stream
 
         // Mapping of classes to their respective MP3 files (local paths)
         const audioFiles = {
@@ -114,8 +115,10 @@
         }
 
         async function setupWebcam(useFrontCamera) {
-            if (webcam) {
-                webcam.stop();
+            // Stop the current webcam stream if any
+            if (currentStream) {
+                const tracks = currentStream.getTracks();
+                tracks.forEach(track => track.stop()); // Stop the tracks
             }
 
             // Get the appropriate video constraints for front or back camera
@@ -128,10 +131,13 @@
             };
 
             try {
-                const stream = await navigator.mediaDevices.getUserMedia(constraints);
+                // Access the user's camera with the selected constraints
+                currentStream = await navigator.mediaDevices.getUserMedia(constraints);
+                
                 webcam = new tmImage.Webcam(224, 224, useFrontCamera); // Smaller resolution
-                await webcam.setup(stream);
+                await webcam.setup(currentStream);
                 await webcam.play();
+
                 document.getElementById("webcam-container").innerHTML = "";
                 document.getElementById("webcam-container").appendChild(webcam.canvas);
             } catch (error) {
