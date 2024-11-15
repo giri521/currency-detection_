@@ -5,51 +5,59 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Currency Detection Using Teachable Machine</title>
     <style>
-        body {
-            background: url('https://img.freepik.com/free-vector/digital-rupee-inr-indian-currency-golden-coin-background_1017-41094.jpg') no-repeat center center fixed;
-            font-family: Arial, sans-serif;
-            text-align: center;
-            background-color: #f9f9f9;
-            margin: 0;
-            padding: 0;
-        }
-        h2 {
-            color: #333;
-            margin: 20px 0;
-        }
-        button {
-            background-color: #4CAF50;
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            font-size: 16px;
-            border-radius: 5px;
-            cursor: pointer;
-            margin: 10px;
-        }
-        button:hover {
-            background-color: #45a049;
-        }
-        #webcam-container {
-            display: flex;
-            justify-content: center;
-            margin: 20px auto;
-            background: #fff;
-            padding: 10px;
-            border-radius: 10px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            max-width: 300px;
-        }
-        #label-container, #message {
-            margin: 20px auto;
-            font-size: 18px;
-            color: #444;
-            font-weight: bold;
-        }
-        #logo {
-            width: 100px;
-            margin: 20px auto;
-        }
+       body {
+    background: url('https://img.freepik.com/free-vector/digital-rupee-inr-indian-currency-golden-coin-background_1017-41094.jpg') no-repeat center center fixed;
+    background-size: cover; /* This ensures the image covers the full screen */
+    font-family: Arial, sans-serif;
+    text-align: center;
+    margin: 0;
+    padding: 0;
+    height: 100vh; /* Make the body height 100% of the viewport height */
+}
+
+h2 {
+    color: #fff; /* White color for the text to stand out against the background */
+    margin: 20px 0;
+}
+
+button {
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    font-size: 16px;
+    border-radius: 5px;
+    cursor: pointer;
+    margin: 10px;
+}
+
+button:hover {
+    background-color: #45a049;
+}
+
+#webcam-container {
+    display: flex;
+    justify-content: center;
+    margin: 20px auto;
+    background: rgba(255, 255, 255, 0.7); /* Light background for better visibility */
+    padding: 10px;
+    border-radius: 10px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    max-width: 300px;
+}
+
+#label-container, #message {
+    margin: 20px auto;
+    font-size: 18px;
+    color: #444;
+    font-weight: bold;
+}
+
+#logo {
+    width: 100px;
+    margin: 20px auto;
+}
+
     </style>
 </head>
 <body>
