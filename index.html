@@ -6,7 +6,7 @@
     <title>Currency Detection Using Teachable Machine</title>
     <style>
         body {
-             background: url('https://img.freepik.com/free-vector/digital-rupee-inr-indian-currency-golden-coin-background_1017-41094.jpg') no-repeat center center fixed;
+            background: url('https://img.freepik.com/free-vector/digital-rupee-inr-indian-currency-golden-coin-background_1017-41094.jpg') no-repeat center center fixed;
             font-family: Arial, sans-serif;
             text-align: center;
             background-color: #f9f9f9;
@@ -55,21 +55,18 @@
 <body>
     <h2>Currency Detection Using Teachable Machine</h2>
     <img id="logo" src="money.png" alt="App Logo">
-    <button onclick="init()">Start Detection</button>
     <button onclick="swapCamera()">Swap Camera</button>
     <div id="webcam-container"></div>
     <div id="label-container"></div>
-    <div id="message">Press "Start Detection" to begin.</div>
+    <div id="message">Press "Swap Camera" to begin.</div>
 
     <!-- Load TensorFlow.js and Teachable Machine libraries -->
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest/dist/tf.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@latest/dist/teachablemachine-image.min.js"></script>
 
     <script>
-        // URL for your Teachable Machine model
         const URL = "https://teachablemachine.withgoogle.com/models/GeWwvngNC/";
 
-        // Global variables
         let model, webcam, labelContainer, maxPredictions;
         let lastPlayedTime = 0; // Timestamp for last audio play
         let usingFrontCamera = true; // Track camera being used
@@ -87,82 +84,65 @@
             "No currency note detected": "audio/no_currency.mp3"
         };
 
-        // Function to initialize the model and webcam
         async function init() {
             const modelURL = URL + "model.json";
             const metadataURL = URL + "metadata.json";
 
-            // Load the model and metadata
             model = await tmImage.load(modelURL, metadataURL);
             maxPredictions = model.getTotalClasses();
 
-            // Setup webcam with flip option
             await setupWebcam(usingFrontCamera);
-
-            // Create labels for predictions
             labelContainer = document.getElementById("label-container");
             for (let i = 0; i < maxPredictions; i++) {
                 labelContainer.appendChild(document.createElement("div"));
             }
 
-            // Announce selected camera
             announceCamera(usingFrontCamera ? "front" : "back");
             window.requestAnimationFrame(loop);
         }
 
-        // Function to setup webcam with the selected camera
         async function setupWebcam(useFrontCamera) {
             if (webcam) {
-                webcam.stop(); // Stop current webcam stream
+                webcam.stop();
             }
             webcam = new tmImage.Webcam(300, 300, useFrontCamera); 
             await webcam.setup();
             await webcam.play();
-            document.getElementById("webcam-container").innerHTML = ""; // Clear previous webcam canvas
+            document.getElementById("webcam-container").innerHTML = "";
             document.getElementById("webcam-container").appendChild(webcam.canvas);
         }
 
-        // Function to continuously capture webcam frames and make predictions
         async function loop() {
             webcam.update(); 
             await predict(); 
             window.requestAnimationFrame(loop); 
         }
 
-        // Function to make predictions based on the webcam frame
         async function predict() {
             const predictions = await model.predict(webcam.canvas);
-
             let maxProbability = 0;
             let predictedClass = "";
 
-            // Find the highest probability prediction
             for (let i = 0; i < maxPredictions; i++) {
                 const classPrediction = predictions[i].className;
                 const probability = predictions[i].probability.toFixed(2);
-
-                // Update the UI with class names and probabilities
                 labelContainer.childNodes[i].innerHTML = `${classPrediction}: ${probability}`;
 
-                // Track the highest probability and its class
                 if (parseFloat(probability) > maxProbability) {
                     maxProbability = parseFloat(probability);
                     predictedClass = classPrediction;
                 }
             }
 
-            // Update the detected currency note display continuously
             document.getElementById("message").innerHTML = `Detected: ${predictedClass}`;
 
-            // Play audio only if confidence level is high enough and 5 seconds have passed since the last play
             const currentTime = Date.now();
-            if (maxProbability >= 0.75 && (currentTime - lastPlayedTime >= 5000)) { // 5 seconds = 5000 ms
-                playAudio(predictedClass); // Play the corresponding audio
-                lastPlayedTime = currentTime; // Update last played time
+            if (maxProbability >= 0.75 && (currentTime - lastPlayedTime >= 5000)) {
+                playAudio(predictedClass);
+                lastPlayedTime = currentTime;
             }
         }
 
-        // Function to play the audio for the detected class
         function playAudio(className) {
             const audioPath = audioFiles[className];
             if (audioPath) {
@@ -175,7 +155,6 @@
             }
         }
 
-        // Function to announce the selected camera
         function announceCamera(camera) {
             const message = `Using ${camera} camera.`;
             const audio = new SpeechSynthesisUtterance(message);
@@ -183,12 +162,14 @@
             document.getElementById("message").innerHTML = message;
         }
 
-        // Function to toggle between front and back cameras
         function swapCamera() {
             usingFrontCamera = !usingFrontCamera;
             setupWebcam(usingFrontCamera);
             announceCamera(usingFrontCamera ? "front" : "back");
         }
+
+        // Automatically initialize the webcam on page load
+        window.onload = init;
     </script>
 </body>
 </html>
