@@ -6,7 +6,8 @@
     <title>Currency Detection Using Teachable Machine</title>
     <style>
         body {
-            background: linear-gradient(to right, #4facfe, #00f2fe); /* Gradient background */
+            background: url('https://img.freepik.com/free-vector/digital-rupee-inr-indian-currency-golden-coin-background_1017-41094.jpg') no-repeat center center fixed;
+            background-size: cover;
             font-family: Arial, sans-serif;
             margin: 0;
             padding: 0;
@@ -16,16 +17,15 @@
             justify-content: center;
             height: 100vh;
             text-align: center;
-        }
-
-        h2 {
             color: white;
-            margin-bottom: 20px;
-            font-size: 24px;
         }
-
+        h1 {
+            margin-bottom: 20px;
+            font-size: 28px;
+            text-shadow: 2px 2px 4px #000;
+        }
         button {
-            background-color: #00f2fe;
+            background-color: #007bff;
             border: none;
             padding: 15px 25px;
             font-size: 18px;
@@ -35,124 +35,99 @@
             border-radius: 8px;
             transition: background-color 0.3s;
         }
-
         button:hover {
-            background-color: #009cbb;
+            background-color: #0056b3;
         }
-
-        #message {
-            font-size: 20px;
-            font-weight: bold;
-            margin-top: 20px;
-            color: white;
-        }
-
         #webcam-container {
-            display: flex;
-            justify-content: center;
             margin-top: 20px;
         }
-
         #label-container {
             margin-top: 20px;
+        }
+        #message {
+            font-size: 20px;
+            margin-top: 20px;
+            text-shadow: 1px 1px 2px #000;
         }
     </style>
 </head>
 <body>
-    <h2>Currency Detection Using Teachable Machine</h2>
-    <button onclick="init(false)">Start Detection (Front Camera)</button>
-    <button onclick="init(true)">Start Detection (Back Camera)</button>
+    <h1>Currency Detection Using Teachable Machine</h1>
+    <button onclick="init(false)">Start Front Camera</button>
+    <button onclick="init(true)">Start Back Camera</button>
     <div id="webcam-container"></div>
     <div id="label-container"></div>
     <div id="message"></div>
 
-    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest/dist/tf.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@latest/dist/teachablemachine-image.min.js"></script>
+    <!-- TensorFlow.js and Teachable Machine Library -->
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image"></script>
 
     <script>
         const URL = "https://teachablemachine.withgoogle.com/models/GeWwvngNC/";
-
         let model, webcam, labelContainer, maxPredictions;
 
-        async function init(useBackCamera = false) {
-            const modelURL = URL + "model.json";
-            const metadataURL = URL + "metadata.json";
+        async function init(useBackCamera) {
+            document.getElementById("message").innerText = useBackCamera 
+                ? "Using Back Camera" 
+                : "Using Front Camera";
 
-            model = await tmImage.load(modelURL, metadataURL);
+            // Load the model and metadata
+            model = await tmImage.load(URL + "model.json", URL + "metadata.json");
             maxPredictions = model.getTotalClasses();
 
+            // Stop previous webcam if exists
             if (webcam) webcam.stop();
 
-            const constraints = {
-                video: {
-                    facingMode: useBackCamera ? { exact: "environment" } : "user",
-                    width: 320,
-                    height: 240
-                }
-            };
+            // Setup webcam
+            const flip = !useBackCamera; // Front camera: true, Back camera: false
+            webcam = new tmImage.Webcam(400, 400, flip);
+            await webcam.setup({ facingMode: useBackCamera ? "environment" : "user" });
+            await webcam.play();
+            window.requestAnimationFrame(loop);
 
-            navigator.mediaDevices.getUserMedia(constraints)
-                .then(function (stream) {
-                    const videoElement = document.createElement("video");
-                    videoElement.srcObject = stream;
-                    videoElement.play();
-                    videoElement.width = 320;
-                    videoElement.height = 240;
+            // Append webcam to the container
+            document.getElementById("webcam-container").innerHTML = "";
+            document.getElementById("webcam-container").appendChild(webcam.canvas);
 
-                    document.getElementById("webcam-container").innerHTML = "";
-                    document.getElementById("webcam-container").appendChild(videoElement);
-
-                    webcam = new tmImage.Webcam(320, 240, false);
-                    webcam.video = videoElement;
-
-                    labelContainer = document.getElementById("label-container");
-                    labelContainer.innerHTML = "";
-                    for (let i = 0; i < maxPredictions; i++) {
-                        labelContainer.appendChild(document.createElement("div"));
-                    }
-
-                    const cameraType = useBackCamera ? "Back Camera" : "Front Camera";
-                    document.getElementById("message").innerHTML = `Using ${cameraType}`;
-
-                    videoElement.onloadedmetadata = () => {
-                        videoElement.play();
-                        window.requestAnimationFrame(loop);
-                    };
-                })
-                .catch(function (err) {
-                    console.error("Error accessing the camera: ", err);
-                    document.getElementById("message").innerHTML = "Camera access denied or not available.";
-                });
+            // Clear and set up label container
+            labelContainer = document.getElementById("label-container");
+            labelContainer.innerHTML = "";
+            for (let i = 0; i < maxPredictions; i++) {
+                labelContainer.appendChild(document.createElement("div"));
+            }
         }
 
         async function loop() {
+            webcam.update(); // Update webcam frame
             await predict();
             window.requestAnimationFrame(loop);
         }
 
         async function predict() {
-            const predictions = await model.predict(webcam.video);
+            const predictions = await model.predict(webcam.canvas);
+            let highestProbability = 0;
+            let detectedClass = "";
 
-            let maxProbability = 0;
-            let predictedClass = "";
-
-            for (let i = 0; i < maxPredictions; i++) {
-                const classPrediction = predictions[i].className;
-                const probability = predictions[i].probability.toFixed(2);
-
-                labelContainer.childNodes[i].innerHTML = `${classPrediction}: ${probability}`;
-
-                if (parseFloat(probability) > maxProbability) {
-                    maxProbability = parseFloat(probability);
-                    predictedClass = classPrediction;
+            predictions.forEach(prediction => {
+                if (prediction.probability > highestProbability) {
+                    highestProbability = prediction.probability;
+                    detectedClass = prediction.className;
                 }
-            }
+            });
 
-            if (maxProbability >= 0.75) {
-                document.getElementById("message").innerHTML = `Detected: ${predictedClass}`;
+            if (highestProbability > 0.7) {
+                document.getElementById("message").innerText = `Detected: ${detectedClass}`;
+                announce(`Detected: ${detectedClass}`);
             } else {
-                document.getElementById("message").innerHTML = "No currency note detected.";
+                document.getElementById("message").innerText = "No clear detection.";
             }
+        }
+
+        function announce(message) {
+            const utterance = new SpeechSynthesisUtterance(message);
+            utterance.lang = "en-US";
+            speechSynthesis.speak(utterance);
         }
     </script>
 </body>
